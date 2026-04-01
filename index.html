@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+  <title>My To-Do List </title>
+</head>
+<body>
+<div class="todo-card">
+  <div class="todo-header">My To-Do List</div>
+
+
+  <div class="add-row">
+    <span class="prefix">New | I</span>
+    <input type="text" id="newTaskInput" placeholder="+ Add" autocomplete="off">
+    <button id="addBtn">➕ Add</button>
+  </div>
+
+  <div class="filter-bar">
+    <button class="filter-btn active" data-filter="all">All</button>
+    <button class="filter-btn" data-filter="active">Active</button>
+    <button class="filter-btn" data-filter="completed">Completed</button>
+  </div>
+
+  <div class="task-sections">
+
+    <div class="task-group" data-group="Courses">
+      <div class="group-title">Courses</div>
+      <ul class="task-list" id="listCourses"></ul>
+    </div>
+    
+    <div class="task-group" data-group="Work">
+      <div class="group-title">Work</div>
+      <ul class="task-list" id="listWork"></ul>
+    </div>
+  
+    <div class="task-group" data-group="New Task">
+      <div class="group-title">New Task</div>
+      <ul class="task-list" id="listNewTask"></ul>
+    </div>
+  </div>
+  <div class="credit-note">✔ check → completed · ✖ delete</div>
+</div>
+
+<script>
+  (function() {
+
+    let tasks = [
+      { id: 'c1', group: 'Courses',  completed: false },
+      { id: 'c2', group: 'Courses', text: 'Watch JS tutorial', completed: true },
+      { id: 'w1', group: 'Work', text: 'Email project manager', completed: false },
+      { id: 'w2', group: 'Work', text: 'Design review meeting', completed: false },
+      { id: 'n1', group: 'New Task', text: 'Plan weekend project', completed: false },
+      { id: 'n2', group: 'New Task', text: 'Buy groceries', completed: true }
+    ];
+
+    // DOM elements
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const taskCourses = document.getElementById('listCourses');
+    const taskWork = document.getElementById('listWork');
+    const taskNew = document.getElementById('listNewTask');
+    const newInput = document.getElementById('newTaskInput');
+    const addBtn = document.getElementById('addBtn');
+
+    let currentFilter = 'all';
+
+   
+    function genId() { return Date.now() + '-' + Math.random().toString(36).substring(2, 6); }
+
+   
+    function renderAll() {
+      // clear all group containers
+      taskCourses.innerHTML = '';
+      taskWork.innerHTML = '';
+      taskNew.innerHTML = '';
+
+    
+      const groups = ['Courses', 'Work', 'New Task'];
+
+      groups.forEach(group => {
+        const groupTasks = tasks.filter(t => t.group === group);
+        // apply filter
+        let filteredTasks = groupTasks;
+        if (currentFilter === 'active') {
+          filteredTasks = groupTasks.filter(t => !t.completed);
+        } else if (currentFilter === 'completed') {
+          filteredTasks = groupTasks.filter(t => t.completed);
+        }
+
+        // choose target list
+        let targetUl;
+        if (group === 'Courses') targetUl = taskCourses;
+        else if (group === 'Work') targetUl = taskWork;
+        else targetUl = taskNew;
+
+        if (filteredTasks.length === 0) {
+       
+          const emptyLi = document.createElement('li');
+          emptyLi.className = 'empty-message';
+          emptyLi.textContent = '✦ no tasks ✦';
+          targetUl.appendChild(emptyLi);
+        } else {
+          filteredTasks.forEach(task => {
+            const li = document.createElement('li');
+            li.className = `task-item ${task.completed ? 'completed' : ''}`;
+            li.dataset.id = task.id;
+
+            // checkbox
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.className = 'task-check';
+            cb.checked = task.completed;
+            // toggle completed on click
+            cb.addEventListener('change', (e) => {
+              e.stopPropagation();
+              task.completed = cb.checked;
+              renderAll(); 
+            });
+
+            // task text span
+            const textSpan = document.createElement('span');
+            textSpan.className = 'task-text';
+            textSpan.textContent = task.text;
+
+            // delete button
+            const delBtn = document.createElement('button');
+            delBtn.className = 'delete-task';
+            delBtn.innerHTML = '✖';
+            delBtn.setAttribute('aria-label', 'delete task');
+            delBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+  
+              tasks = tasks.filter(t => t.id !== task.id);
+              renderAll();
+            });
+
+            li.appendChild(cb);
+            li.appendChild(textSpan);
+            li.appendChild(delBtn);
+            targetUl.appendChild(li);
+          });
+        }
+      });
+    }
+
+
+    function addNewTask() {
+      const text = newInput.value.trim();
+      if (text === '') {
+        alert('please enter a task');
+        return;
+      }
+      const newTask = {
+        id: genId(),
+        group: 'New Task',    
+        text: text,
+        completed: false
+      };
+      tasks.push(newTask);
+      newInput.value = '';      
+      renderAll();
+    }
+
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        filterBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const filterValue = btn.getAttribute('data-filter'); // 'all', 'active', 'completed'
+        currentFilter = filterValue;
+        renderAll();
+      });
+    });
+
+
+    addBtn.addEventListener('click', addNewTask);
+    newInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addNewTask();
+      }
+    });
+
+    renderAll();
+
+
+  })();
+</script>
+
+</body>
+</html>
